@@ -47,6 +47,7 @@ class TestOutlineTree {
           + "000054     MAP EMPMAP.\n"
           + "000060 Working-Storage Section.\n"
           + "000070     COPY BAR.\n"
+          + "000075     COPY BAR.\n"
           + "000080     01 User-Num1 PIC 9(9).\n"
           + "000090     01 User-Num2 PIC 9(9).\n"
           + "000100     01 User-Address.\n"
