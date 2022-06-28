@@ -16,7 +16,10 @@
 //@ts-ignore
 /// <reference types="../../support/" />
 
-import { Theia } from '@eclipse/che-che4z/tests/dist/selectors';
+import { Theia, VSCODE } from '@eclipse/che-che4z/tests/dist/selectors';
+
+const env = Cypress.env('ide');
+const IDE = env === 'theia' ? Theia : VSCODE;
 
 //F102470 - LSP for COBOL: support Community requests and tech debt
 
@@ -27,16 +30,16 @@ context('This is F102470 spec', () => {
   describe('US708186 Check work with subroutines', () => {
     it(['smoke'], 'Error check in subroutine resolution', () => {
       cy.openFile('CALL.cbl').goToLine(21);
-      cy.getCurrentLine().should('not.have.class', Theia.editorError);
+      cy.getCurrentLine().should('not.have.class', IDE.editorError);
       cy.goToLine(23);
-      cy.getCurrentLine().should('not.have.class', Theia.editorError);
+      cy.getCurrentLine().should('not.have.class', IDE.editorError);
       cy.goToLine(22);
       cy.getCurrentLineErrors({ expectedLine: 22, errorType: 'info' })
         .getHoverErrorMessage()
         .contains('SUB2: Subroutine not found');
     });
 
-    it(['smoke', 'CI'], 'Go to definition for subroutine', () => {
+    it(['smoke', 'investigation'], 'Go to definition for subroutine', () => {
       cy.openFile('CALL.cbl').goToLine(21);
       cy.getLineByNumber(21).findText('SUB1').goToDefinition();
       cy.getCurrentTab().should('contain.text', 'SUB1.cob');
@@ -48,9 +51,9 @@ context('This is F102470 spec', () => {
       cy.goToLine(23);
       cy.getCurrentLine().type('{end}{enter}');
       cy.getCurrentLine().type('{ctrl} ').type('SUB'); // Ctrl+Space
-      cy.get(Theia.suggestWidget).contains('SUB1');
-      cy.get(Theia.suggestWidget).contains('SUB3');
-      cy.get(Theia.suggestWidget).not().contains('SUB3');
+      cy.get(IDE.suggestWidget).contains('SUB1');
+      cy.get(IDE.suggestWidget).contains('SUB3');
+      cy.get(IDE.suggestWidget).not().contains('SUB3');
     });
   });
 });
