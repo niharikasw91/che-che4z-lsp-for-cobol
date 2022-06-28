@@ -40,8 +40,7 @@ class SnippetCompletionTest {
   private static final String INSERT_TEXT = "WRITE ${1:item}";
   private static final String DOCUMENTATION_TEXT = "WRITE item";
   private static final String LABEL = "WRITE item";
-  private static final String KEY = "WRITE";
-
+  private static final String KEY = "WRITE item";
 
   private static final String IDMS_INSERT_TEXT =
       "IDMS-CONTROL SECTION.\nPROTOCOL. MODE IS ${1:operating-mode}.";

@@ -1748,7 +1748,7 @@
     ],
     "description": "WHEN OTHER"
   },
-  "WRITE": {
+  "WRITE item": {
     "prefix": "WRITE item",
     "body": [
       "WRITE ${1:item}"
