@@ -109,16 +109,6 @@
                 }
             }
         ],
-        "snippets": [
-            {
-                "language": "COBOL",
-                "path": "./snippets.json"
-            },
-            {
-                "language": "COBOL Copybook",
-                "path": "./snippets.json"
-            }
-        ],
         "configuration": {
             "title": "COBOL Language Support",
             "properties": {
