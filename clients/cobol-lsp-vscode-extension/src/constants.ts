@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 export const SETTINGS_CPY_SECTION: string = "cobol-lsp.cpy-manager";
-
-export const SERVER_PORT = "cobol-lsp.server.port"
+export const SETTINGS_DIALECT = "cobol-lsp.dialects";
+export const SERVER_PORT = "cobol-lsp.server.port";
 export const PATHS_LOCAL_KEY = "paths-local";
 export const PATHS_ZOWE = "paths-dsn";
 export const PATHS_USS = "paths-uss";
@@ -44,6 +44,9 @@ export const EXTENSION_ID = "broadcommfd.cobol-language-support";
 export const TELEMETRY_DEFAULT_CONTENT = "INVALID_INSTRUMENTATION_KEY";
 export const ZOWE_EXT_MISSING_MSG = "Zowe Explorer version 1.15.0 or higher is required to download copybooks from the mainframe."
 export const INSTALL_ZOWE = "Install Zowe Explorer";
+export const DACO_DIALECT = "DaCo";
+export const IDMS_DIALECT = "IDMS";
+export const DEFAULT_DIALECT = "COBOL";
 
 export enum PUNCH_CARD {
     SEQUENCE_AREA_END_POS = 6,

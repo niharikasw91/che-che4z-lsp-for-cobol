@@ -27,6 +27,7 @@ import { TelemetryService } from "./services/reporter/TelemetryService";
 import { createFileWithGivenPath } from "./services/Settings";
 import { resolveSubroutineURI } from "./services/util/SubroutineUtils";
 import { CommentAction, commentCommand } from "./commands/CommentCommand";
+import { SnippetCompletionProvider } from "./services/snippetcompletion/SnippetCompletionProvider";
 
 let copyBooksDownloader: CopybookDownloadService;
 let middleware: Middleware;
@@ -68,6 +69,10 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.languages.registerCodeActionsProvider(
             { scheme: "file", language: LANGUAGE_ID },
             new CopybooksCodeActionProvider()));
+    const competionProvider =  vscode.languages.registerCompletionItemProvider(
+                { scheme: "file", language: LANGUAGE_ID },
+                new SnippetCompletionProvider());
+    context.subscriptions.push(competionProvider);
 
     try {
         await languageClientService.checkPrerequisites();

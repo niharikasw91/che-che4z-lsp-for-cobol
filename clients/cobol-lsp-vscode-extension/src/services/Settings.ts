@@ -15,7 +15,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { PATHS_LOCAL_KEY, PATHS_USS, PATHS_ZOWE, SERVER_PORT, SETTINGS_CPY_SECTION, SETTINGS_SUBROUTINE_LOCAL_KEY } from "../constants";
+import cobolSnippets = require("../services/snippetcompletion/cobolSnippets.json");
+import dacoSnippets = require("../services/snippetcompletion/dacoSnippets.json");
+import idmsSnippets = require("../services/snippetcompletion/idmsSnippets.json");
+import { DACO_DIALECT, IDMS_DIALECT, PATHS_LOCAL_KEY, PATHS_USS, PATHS_ZOWE, SERVER_PORT, SETTINGS_CPY_SECTION, SETTINGS_DIALECT, SETTINGS_SUBROUTINE_LOCAL_KEY } from "../constants";
 
 /**
  * New file (e.g .gitignore) will be created or edited if exits, under project folder
@@ -124,6 +127,19 @@ export class SettingsService {
      */
     public static getCopybookFileEncoding() {
         return vscode.workspace.getConfiguration(SETTINGS_CPY_SECTION).get("copybook-file-encoding")
+    }
+
+    /**
+     * Return the dialect type supplied by user
+     * @returns string
+     */
+         public static getSnippetsForUserDialect() {
+            const dialectList: string[] =  vscode.workspace.getConfiguration().get(SETTINGS_DIALECT);
+            if (dialectList.includes(DACO_DIALECT)) {
+             return dacoSnippets;
+            } else if (dialectList.includes(IDMS_DIALECT)) {
+                 return idmsSnippets;
+             } else { return cobolSnippets; }
     }
     private static getCopybookConfigValues(section: string, cobolFileName: string, dialectType: string) {
         const programFile = cobolFileName.replace(/\.[^/.]+$/, "");
