@@ -41,6 +41,7 @@ import static org.eclipse.lsp.cobol.core.model.tree.variables.VariableType.*;
 @UtilityClass
 @Slf4j
 public class VariableDefinitionUtil {
+  private static final String DUPLICATED_DEFINITION_ERROR = "semantics.duplicated";
   public static final int LEVEL_FD_SD = -2;
   public static final int LEVEL_MAP_NAME = -1;
   public static final int LEVEL_MNEMONIC = 0;
@@ -108,14 +109,37 @@ public class VariableDefinitionUtil {
    * @return the list of errors
    */
   public List<SyntaxError> processNodeWithVariableDefinitions(Node node) {
-    Deque<VariableDefinitionNode> variableDefinitionNodes = new LinkedList<>(unwrapVariables(node));
-    variableDefinitionNodes.forEach(n -> n.getParent().removeChild(n));
     List<SyntaxError> errors = new ArrayList<>();
+    Deque<VariableDefinitionNode> variableDefinitionNodes = new LinkedList<>(unwrapVariables(node));//.unwrap(errors::addAll));
+    variableDefinitionNodes.forEach(n -> n.getParent().removeChild(n));
     errors.addAll(processDefinition(node, 1, variableDefinitionNodes));
     errors.addAll(checkGlobalUniqueNames(node));
     errors.addAll(checkTopNumbers(node));
     reshapeVariablesLocality(node);
     registerVariablesInProgram(node);
+    errors.addAll(processDuplicates(node));
+    return errors;
+  }
+
+  private static List<SyntaxError> processDuplicates(Node node) {
+    List<SyntaxError> errors = new ArrayList<>();
+    Set<VariableDefinitionNode> items = new HashSet<>();
+    List<Node> nodeList = node.getChildren().stream().filter(hasType(NodeType.VARIABLE)).flatMap(Node::getDepthFirstStream).filter(hasType(NodeType.VARIABLE)).collect(Collectors.toList())//    unwrapVariables.forEach( item -> {
+nodeList.forEach(item -> {
+      if(items.contains(item)){
+        SyntaxError error =
+                SyntaxError.syntaxError()
+                        .errorSource(ErrorSource.PARSING)
+                        .severity(SEVERITY)
+                        .locality(item.getLocality())
+                        .messageTemplate(MessageTemplate.of(DUPLICATED_DEFINITION_ERROR))
+                        .build();
+        errors.add(error);
+      }
+      else
+        items.add((VariableDefinitionNode) item);
+    });
+
     return errors;
   }
 
@@ -124,18 +148,36 @@ public class VariableDefinitionUtil {
    * @param node - node for processing
    * @return a list of unwrapped variables
    */
+//  private ResultWithErrors<List<VariableDefinitionNode>> unwrapVariables(Node node) {
   private List<VariableDefinitionNode> unwrapVariables(Node node) {
     List<VariableDefinitionNode> variables = new ArrayList<>();
+//    Set<VariableNameAndLocality> variableList = new HashSet<>();
     List<CopyNode> copybooks = new LinkedList<>();
-
+    List<SyntaxError> errors = new ArrayList<>();
     node.getChildren()
         .forEach(c -> {
           if (c.getNodeType() == NodeType.VARIABLE_DEFINITION) {
             variables.add((VariableDefinitionNode) c);
+
           }
           if (c.getNodeType() == NodeType.COPY) {
             copybooks.add((CopyNode) c);
           }
+//          if(c instanceof VariableDefinitionNode && ((VariableDefinitionNode) c).getVariableName() != null) {
+//            if (variableList.contains(((VariableDefinitionNode) c).getVariableName())) {
+//              SyntaxError error = SyntaxError.syntaxError()
+//                      .errorSource(ErrorSource.PARSING)
+//                      .severity(SEVERITY)
+//                      .locality(c.getLocality())
+//                      .messageTemplate(MessageTemplate.of(DUPLICATED_DEFINITION_ERROR))
+//                      .build();
+//              errors.add(error);
+//
+//            } else {
+//              variableList.add(((VariableDefinitionNode) c).getVariableName());
+//            }
+//          }
+
         });
 
     copybooks.sort(Comparator.comparingInt(c -> c.getLocality().getRange().getStart().getLine()));
@@ -177,6 +219,8 @@ public class VariableDefinitionUtil {
           .distinct()
           .forEach(copyNodeVariable -> variables.add(index.getAndIncrement(), copyNodeVariable));
     });
+
+//    return new ResultWithErrors<>(variables.stream().distinct().collect(Collectors.toList()), errors);
     return variables.stream().distinct().collect(Collectors.toList());
   }
 
@@ -266,6 +310,15 @@ public class VariableDefinitionUtil {
     }
     return errors;
   }
+
+//  private static SyntaxError raiseErrorForDuplicateDefinition(Deque<VariableDefinitionNode> definitionNodes) {
+//    return   SyntaxError.syntaxError()
+//                    .errorSource(ErrorSource.PARSING)
+//                    .severity(SEVERITY)
+//                    .locality(definitionNodes.getLocality())
+//                    .messageTemplate(MessageTemplate.of(UNKNOWN_VARIABLE_DEFINITION))
+//                    .build();
+//  }
 
   private Optional<ResultWithErrors<VariableNode>> convert(VariableDefinitionNode definitionNode) {
     return matchers.stream()

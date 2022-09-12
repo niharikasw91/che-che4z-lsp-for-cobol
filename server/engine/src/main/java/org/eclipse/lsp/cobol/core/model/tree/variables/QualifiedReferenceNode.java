@@ -93,15 +93,17 @@ public class QualifiedReferenceNode extends Node {
     String dataName = variableUsageNodes.get(0).getName();
     if (FigurativeConstants.FIGURATIVE_CONSTANTS.stream()
             .anyMatch(e -> dataName.toUpperCase().equals(e))) return ImmutableList.of();
-    SyntaxError error = SyntaxError.syntaxError().errorSource(ErrorSource.PARSING)
-        .severity(ErrorSeverity.ERROR)
-        .locality(getLocality())
-        .messageTemplate(MessageTemplate.of(
-            foundDefinitions.isEmpty() ? NOT_DEFINED_ERROR : DUPLICATED_DEFINITION_ERROR,
-            dataName
-        ))
-        .build();
-    LOG.debug("Syntax error by QualifiedReferenceNode " + error.toString());
-    return ImmutableList.of(error);
+    if(foundDefinitions.isEmpty()) {
+      SyntaxError error = SyntaxError.syntaxError().errorSource(ErrorSource.PARSING)
+              .severity(ErrorSeverity.ERROR)
+              .locality(getLocality())
+              .messageTemplate(MessageTemplate.of(NOT_DEFINED_ERROR,
+                      dataName
+              ))
+              .build();
+      LOG.debug("Syntax error by QualifiedReferenceNode " + error.toString());
+      return ImmutableList.of(error);
+    }
+    return ImmutableList.of();
   }
 }

@@ -14,12 +14,14 @@
  */
 package org.eclipse.lsp.cobol.core.model.tree.variables;
 
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.eclipse.lsp.cobol.core.model.Locality;
 
 /** The class contains a variable name and its locality */
 @Value
+@EqualsAndHashCode
 public class VariableNameAndLocality {
   String name;
-  Locality locality;
+  @EqualsAndHashCode.Exclude Locality locality;
 }
