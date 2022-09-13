@@ -40,70 +40,70 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class QualifiedReferenceNode extends Node {
-  private static final String NOT_DEFINED_ERROR = "semantics.notDefined";
-  private static final String DUPLICATED_DEFINITION_ERROR = "semantics.duplicated";
+    private static final String NOT_DEFINED_ERROR = "semantics.notDefined";
+    private static final String DUPLICATED_DEFINITION_ERROR = "semantics.duplicated";
 
-  private VariableNode variableDefinitionNode;
+    private VariableNode variableDefinitionNode;
 
-  public QualifiedReferenceNode(Locality location) {
-    super(location, NodeType.QUALIFIED_REFERENCE_NODE);
-    addProcessStep(this::waitForVariableDefinitions);
-  }
-
-  public Optional<VariableNode> getVariableDefinitionNode() {
-    return Optional.ofNullable(variableDefinitionNode);
-  }
-
-  private List<SyntaxError> waitForVariableDefinitions() {
-    addProcessStep(this::updateVariableUsages);
-    return ImmutableList.of();
-  }
-
-  private List<SyntaxError> updateVariableUsages() {
-    List<VariableUsageNode> variableUsageNodes = getChildren().stream()
-        .filter(hasType(NodeType.VARIABLE_USAGE))
-        .map(VariableUsageNode.class::cast)
-        .collect(Collectors.toList());
-    if (variableUsageNodes.isEmpty()) {
-      LOG.warn("Qualified reference node don't have any variable usages. {}", this);
-      return ImmutableList.of();
+    public QualifiedReferenceNode(Locality location) {
+        super(location, NodeType.QUALIFIED_REFERENCE_NODE);
+        addProcessStep(this::waitForVariableDefinitions);
     }
-    List<VariableNode> foundDefinitions = getNearestParentByType(NodeType.PROGRAM)
-        .map(ProgramNode.class::cast)
-        .map(programNode -> programNode.getVariableDefinition(variableUsageNodes))
-        .orElseGet(ImmutableList::of);
-    for (VariableNode definitionNode: foundDefinitions) {
-      variableDefinitionNode = definitionNode;
-      for (VariableUsageNode usageNode : variableUsageNodes) {
-        while (definitionNode != null && !usageNode.getName().equals(definitionNode.getName())) {
-          definitionNode = definitionNode.getNearestParentByType(NodeType.VARIABLE)
-              .map(VariableNode.class::cast)
-              .orElse(null);
+
+    public Optional<VariableNode> getVariableDefinitionNode() {
+        return Optional.ofNullable(variableDefinitionNode);
+    }
+
+    private List<SyntaxError> waitForVariableDefinitions() {
+        addProcessStep(this::updateVariableUsages);
+        return ImmutableList.of();
+    }
+
+    private List<SyntaxError> updateVariableUsages() {
+        List<VariableUsageNode> variableUsageNodes = getChildren().stream()
+                .filter(hasType(NodeType.VARIABLE_USAGE))
+                .map(VariableUsageNode.class::cast)
+                .collect(Collectors.toList());
+        if (variableUsageNodes.isEmpty()) {
+            LOG.warn("Qualified reference node don't have any variable usages. {}", this);
+            return ImmutableList.of();
         }
-        if (definitionNode == null) {
-          // this is not valid case: if we found definition with all qualifiers we must find definitions here too
-          LOG.error("Can't find definitions for all usages");
-          break;
+        List<VariableNode> foundDefinitions = getNearestParentByType(NodeType.PROGRAM)
+                .map(ProgramNode.class::cast)
+                .map(programNode -> programNode.getVariableDefinition(variableUsageNodes))
+                .orElseGet(ImmutableList::of);
+        for (VariableNode definitionNode : foundDefinitions) {
+            variableDefinitionNode = definitionNode;
+            for (VariableUsageNode usageNode : variableUsageNodes) {
+                while (definitionNode != null && !usageNode.getName().equals(definitionNode.getName())) {
+                    definitionNode = definitionNode.getNearestParentByType(NodeType.VARIABLE)
+                            .map(VariableNode.class::cast)
+                            .orElse(null);
+                }
+                if (definitionNode == null) {
+                    // this is not valid case: if we found definition with all qualifiers we must find definitions here too
+                    LOG.error("Can't find definitions for all usages");
+                    break;
+                }
+                definitionNode.addUsage(usageNode);
+            }
         }
-        definitionNode.addUsage(usageNode);
-      }
+        if (foundDefinitions.size() == 1)
+            return ImmutableList.of();
+        String dataName = variableUsageNodes.get(0).getName();
+        if (FigurativeConstants.FIGURATIVE_CONSTANTS.stream()
+                .anyMatch(e -> dataName.toUpperCase().equals(e))) return ImmutableList.of();
+        if (foundDefinitions.isEmpty()) {
+            SyntaxError error = SyntaxError.syntaxError().errorSource(ErrorSource.PARSING)
+                    .severity(ErrorSeverity.ERROR)
+                    .locality(getLocality())
+                    .messageTemplate(MessageTemplate.of(NOT_DEFINED_ERROR,
+                            dataName
+                    ))
+                    .build();
+            LOG.debug("Syntax error by QualifiedReferenceNode " + error.toString());
+            return ImmutableList.of(error);
+        }
+        return ImmutableList.of();
     }
-    if (foundDefinitions.size() == 1)
-      return ImmutableList.of();
-    String dataName = variableUsageNodes.get(0).getName();
-    if (FigurativeConstants.FIGURATIVE_CONSTANTS.stream()
-            .anyMatch(e -> dataName.toUpperCase().equals(e))) return ImmutableList.of();
-    if(foundDefinitions.isEmpty()) {
-      SyntaxError error = SyntaxError.syntaxError().errorSource(ErrorSource.PARSING)
-              .severity(ErrorSeverity.ERROR)
-              .locality(getLocality())
-              .messageTemplate(MessageTemplate.of(NOT_DEFINED_ERROR,
-                      dataName
-              ))
-              .build();
-      LOG.debug("Syntax error by QualifiedReferenceNode " + error.toString());
-      return ImmutableList.of(error);
-    }
-    return ImmutableList.of();
-  }
 }
